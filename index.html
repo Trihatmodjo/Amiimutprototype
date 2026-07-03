@@ -276,10 +276,9 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <script type="text/javascript">
-        // Menggunakan path relatif lurus agar aman dari error 404 URL di server manapun
         const URL_MODEL = "./"; 
 
-        let model, webcam, ctx, labelContainer, maxPredictions;
+        let model, videoElement, ctx, canvasElement, labelContainer, maxPredictions;
         let isCelebrating = false; 
         let animationFrameId = null;
 
@@ -292,48 +291,41 @@
             }
 
             try {
-                // 1. Memuat Model AI Teachable Machine
+                // 1. Memuat Model AI
                 model = await tmPose.load(URL_MODEL + "model.json", URL_MODEL + "metadata.json");
                 maxPredictions = model.getTotalClasses();
 
-                // 2. Akses Kamera Manual Menggunakan MediaDevices API (Jauh Lebih Stabil & Anti-Blank)
+                // 2. Akses Live Kamera menggunakan standar HTML5 Video
                 const stream = await navigator.mediaDevices.getUserMedia({ 
                     video: { width: 640, height: 480, facingMode: "user" }, 
                     audio: false 
                 });
 
-                // Buat tag video virtual sebagai media penampung kamera
-                const video = document.createElement("video");
-                video.srcObject = stream;
-                video.autoplay = true;
-                video.playsInline = true;
-                video.width = 640;
-                video.height = 480;
+                videoElement = document.createElement("video");
+                videoElement.srcObject = stream;
+                videoElement.autoplay = true;
+                videoElement.playsInline = true;
+                videoElement.muted = true;
+                videoElement.width = 640;
+                videoElement.height = 480;
 
-                // Tunggu sampai kamera benar-back memancarkan gambar stream
                 await new Promise((resolve) => {
-                    video.onloadedmetadata = () => {
-                        video.play();
+                    videoElement.onloadedmetadata = () => {
+                        videoElement.play();
                         resolve();
                     };
                 });
-
-                // Bungkus objek video agar formatnya sama dengan yang dibutuhkan oleh Teachable Machine
-                webcam = {
-                    canvas: video,
-                    update: () => {} 
-                };
                 
-                // 3. Setup Canvas Tampilan Layar Utama
-                const canvas = document.createElement("canvas");
-                canvas.width = 640;
-                canvas.height = 480;
-                ctx = canvas.getContext("2d");
+                // 3. Setup Canvas Tampilan Utama
+                canvasElement = document.createElement("canvas");
+                canvasElement.width = 640;
+                canvasElement.height = 480;
+                ctx = canvasElement.getContext("2d");
 
                 document.getElementById("webcam-container").innerHTML = "";
-                document.getElementById("webcam-container").appendChild(canvas);
+                document.getElementById("webcam-container").appendChild(canvasElement);
                 
-                // 4. Setup Wadah Label Hasil Prediksi Gerakan
+                // 4. Setup Label
                 labelContainer = document.getElementById("label-container");
                 labelContainer.innerHTML = "";
                 for (let i = 0; i < maxPredictions; i++) {
@@ -343,39 +335,40 @@
                     labelContainer.appendChild(divBar);
                 }
 
-                // Jalankan loop pembacaan frame AI
+                // Jalankan perulangan gambar frame
                 animationFrameId = window.requestAnimationFrame(loopAmi);
 
             } catch (error) {
-                placeholder.innerHTML = "❌ Kamera Gagal Merespon.<br><br>Solusi: Tutup aplikasi lain yang sedang pakai kamera (Zoom/OBS/Meet), lalu klik 'Izinkan Kamera' di pojok kiri atas browser Anda!";
+                placeholder.innerHTML = "❌ Kamera Gagal Merespon.<br><br>Solusi: Pastikan tidak ada aplikasi lain memakai kamera, lalu refresh halaman!";
                 console.error(error);
             }
         }
 
         async function loopAmi() {
-            if (webcam && webcam.canvas) {
-                // Gambar stream kamera terbalik secara manual (efek cermin / mirror) biar pengguna nyaman
+            if (videoElement && videoElement.readyState === videoElement.HAVE_ENOUGH_DATA) {
                 if (ctx) {
+                    ctx.clearRect(0, 0, 640, 480);
+                    // Gambar frame kamera terbaru (di-flip cermin)
                     ctx.save();
                     ctx.scale(-1, 1);
-                    ctx.drawImage(webcam.canvas, -640, 0, 640, 480);
+                    ctx.drawImage(videoElement, -640, 0, 640, 480);
                     ctx.restore();
                 }
                 
+                // Kirim frame aktif langsung ke AI Teachable Machine
                 await prediksiIsyaratAnak();
             }
             animationFrameId = window.requestAnimationFrame(loopAmi);
         }
 
         async function prediksiIsyaratAnak() {
-            if (!model || !webcam.canvas) return;
+            if (!model || !canvasElement) return;
 
-            // Membaca pose dari koordinat gambar video streaming
-            const { pose, prediction } = await model.estimatePose(webcam.canvas);
+            // Mengestimasi koordinat tubuh langsung dari canvas yang terus bergerak
+            const { pose, prediction } = await model.estimatePose(canvasElement);
             
-            // Gambar garis kerangka tubuh di atas video canvas
+            // Gambar tulang kerangka di atas canvas
             if (ctx && pose) {
-                // Gambar ulang titik (keypoints) dan tulang (skeleton)
                 model.drawKeypoints(pose.keypoints, 0.6, ctx);
                 model.drawSkeleton(pose.keypoints, 0.6, ctx);
             }
@@ -399,7 +392,6 @@
                     }
                 }
 
-                // Filter nama kelas penyeimbang (Biar selebrasi tidak meledak saat posisi diam)
                 const namaGerakanUpper = namaGerakan.toUpperCase();
                 const isKataAbaikan = namaGerakanUpper === "NORMAL" || namaGerakanUpper === "BACKGROUND" || namaGerakanUpper === "NETRAL";
 
@@ -408,7 +400,6 @@
                 }
             }
 
-            // Jalankan fungsi selebrasi jika terpicu gerakan valid
             if (pemicuSelebrasi) {
                 jalankanSelebrasi(pemicuSelebrasi);
             }
