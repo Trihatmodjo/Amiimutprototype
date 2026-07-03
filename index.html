@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AMI IMUT - Aplikasi Belajar Isyarat Tunarungu</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Nunito', sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .main-card {
+            background: white;
+            border-radius: 30px;
+            padding: 30px;
+            width: 100%;
+            max-width: 850px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+            border: 8px solid #fff;
+            text-align: center;
+            position: relative;
+        }
+        h1.title {
+            font-family: 'Fredoka One', cursive;
+            color: #ff4757;
+            font-size: 38px;
+            margin: 0 0 5px 0;
+            text-shadow: 2px 2px 0px #f1f2f6;
+        }
+        p.subtitle {
+            color: #747d8c;
+            font-size: 16px;
+            font-weight: 700;
+            margin: 0 0 25px 0;
+        }
+        
+        /* DESAIN KAMERA DI-GEDEIN BIAR PUAS */
+        #webcam-container {
+            margin: 0 auto;
+            width: 100%;
+            max-width: 600px;
+            height: 450px;
+            border-radius: 25px;
+            border: 8px solid #ff7f50;
+            overflow: hidden;
+            background-color: #2f3542;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        #webcam-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover;
+        }
+        
+        /* BELUM AKTIF STATE */
+        .placeholder-text {
+            color: #ffa502;
+            font-size: 20px;
+            padding: 20px;
+            font-weight: 900;
+        }
+        
+        /* TOMBOL BESAR JOSSS */
+        .btn-mulai {
+            font-family: 'Fredoka One', cursive;
+            background: linear-gradient(to bottom, #2ecc71, #27ae60);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 22px;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 8px 0px #1e824c, 0 10px 20px rgba(0,0,0,0.2);
+            transition: all 0.1s ease;
+            margin-bottom: 25px;
+        }
+        .btn-mulai:active {
+            transform: translateY(4px);
+            box-shadow: 0 4px 0px #1e824c, 0 5px 10px rgba(0,0,0,0.2);
+        }
+        
+        /* AREA STATUS DETEKSI & AKURASI */
+        #label-container {
+            margin-top: 25px;
+            padding: 15px;
+            background-color: #f1f2f6;
+            border-radius: 20px;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 8px;
+        }
+        .bar-prediksi {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: white;
+            padding: 8px 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            font-size: 18px;
+            font-weight: 900;
+        }
+        .nama-kelas { color: #2f3542; text-transform: uppercase;}
+        .persen-kelas { color: #ff4757; }
+        
+        /* POPUP SELEBRASI BENAR */
+        #celebration-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 22px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            display: none;
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        #celebration-overlay h2 {
+            font-family: 'Fredoka One', cursive;
+            color: #2ecc71;
+            font-size: 45px;
+            margin: 0;
+            text-shadow: 3px 3px 0px #f1f2f6;
+        }
+        #celebration-overlay p {
+            font-size: 22px;
+            color: #57606f;
+            margin: 10px 0 0 0;
+            font-weight: 900;
+        }
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-card">
+        <div id="celebration-overlay">
+            <h2>?? HEBAT !!! ??</h2>
+            <p>Isyarat "MAKAN" Kamu Benar! ??</p>
+        </div>
+
+        <h1 class="title">AMI IMUT</h1>
+        <p class="subtitle">Aplikasi Multimedia Inklusif Interaktif Murid Tunarungu</p>
+        
+        <button type="button" class="btn-mulai" onclick="startAmiImut()">KLIK UNTUK MULAI</button>
+        
+        <div id="webcam-container">
+            <div class="placeholder-text" id="placeholder-info">Kamera belum aktif. Yuk klik tombol di atas!</div>
+        </div>
+        
+        <div id="label-container"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script type="text/javascript">
+        // Jalur relatif, otomatis membaca file model pas di GitHub Pages nanti
+        const URL_MODEL = "./"; 
+
+        let model, webcam, labelContainer, maxPredictions;
+        let isCelebrating = false; // Pengunci biar ledakannya ga nge-lag berulang-ulang
+
+        async function startAmiImut() {
+            const placeholder = document.getElementById("placeholder-info");
+            placeholder.innerHTML = "Menghubungkan ke Otak AI... Tunggu bentar ya sayang...";
+
+            try {
+                // Memuat model .json dari folder yang sama
+                model = await tmImage.load(URL_MODEL + "model.json", URL_MODEL + "metadata.json");
+                maxPredictions = model.getTotalClasses();
+
+                // Setup kamera jumbo (600x450 piksel)
+                const flip = true; 
+                webcam = new tmImage.Webcam(600, 450, flip); 
+                await webcam.setup(); 
+                await webcam.play();
+                
+                window.requestAnimationFrame(loopAmi);
+
+                // Hilangkan placeholder, masukkan kamera asli
+                document.getElementById("webcam-container").innerHTML = "";
+                document.getElementById("webcam-container").appendChild(webcam.canvas);
+                
+                labelContainer = document.getElementById("label-container");
+                labelContainer.innerHTML = "";
+                for (let i = 0; i < maxPredictions; i++) {
+                    let divBar = document.createElement("div");
+                    divBar.className = "bar-prediksi";
+                    divBar.innerHTML = `<span class="nama-kelas">Memuat kelas...</span><span class="persen-kelas">0%</span>`;
+                    labelContainer.appendChild(divBar);
+                }
+            } catch (error) {
+                placeholder.innerHTML = "? Gagal memuat AI lokal. Kodingan ini akan langsung aktif begitu di-upload ke GitHub Pages!";
+                console.error(error);
+            }
+        }
+
+        async function loopAmi() {
+            webcam.update(); 
+            await prediksiIsyaratAnak();
+            window.requestAnimationFrame(loopAmi);
+        }
+
+        async function prediksiIsyaratAnak() {
+            const prediction = await model.predict(webcam.canvas);
+            
+            for (let i = 0; i < maxPredictions; i++) {
+                const namaGerakan = prediction[i].className; // "Normal" atau "MAKAN"
+                const akurasi = prediction[i].probability; 
+                const persen = (akurasi * 100).toFixed(0);
+
+                // Update teks ke tampilan
+                if (labelContainer.childNodes[i]) {
+                    labelContainer.childNodes[i].innerHTML = `
+                        <span class="nama-kelas">Gerakan: ${namaGerakan}</span>
+                        <span class="persen-kelas">${persen}% Cocok</span>
+                    `;
+                }
+
+                // =========================================================================
+                // LOGIKA EMAS: JIKA ANAK SUKSES MEMPERAGAKAN "MAKAN" (Akurasi > 90%)
+                // =========================================================================
+                if (namaGerakan === "MAKAN" && akurasi > 0.90 && !isCelebrating) {
+                    isCelebrating = true; // Kunci biar ga meledak terus menerus
+                    
+                    // 1. Munculkan overlay teks HEBAT
+                    const overlay = document.getElementById("celebration-overlay");
+                    overlay.style.display = "flex";
+
+                    // 2. Efek Meledak Ulang Tahun (Petasan Confetti Muter/Menyebar)
+                    let duration = 3 * 1000; // Durasi pesta kembang api (3 detik)
+                    let end = Date.now() + duration;
+
+                    (function frame() {
+                        // Tembakan kiri
+                        confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 } });
+                        // Tembakan kanan
+                        confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 } });
+
+                        if (Date.now() < end) {
+                            requestAnimationFrame(frame);
+                        }
+                    }());
+
+                    // 3. Setelah 4 detik, hilangkan selebrasi dan reset sistem agar bisa latihan lagi
+                    setTimeout(() => {
+                        overlay.style.display = "none";
+                        isCelebrating = false;
+                    }, 4000);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
