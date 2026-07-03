@@ -1,28 +1,31 @@
 <script type="text/javascript">
-        // Deteksi lokasi path folder dinamis otomatis
-        const currentLocation = window.location.href;
-        const URL_MODEL = currentLocation.substring(0, currentLocation.lastIndexOf('/')) + "/"; 
+        // Menggunakan path relatif langsung ke folder tempat index.html berada
+        const URL_MODEL = "./"; 
 
         let model, webcam, ctx, labelContainer, maxPredictions;
         let isCelebrating = false; 
+        let animationFrameId = null; // Untuk mengontrol loop dengan aman
 
         async function startAmiImut() {
             const placeholder = document.getElementById("placeholder-info");
             placeholder.innerHTML = "Menghubungkan ke Otak AI Pose... Tunggu bentar ya...";
 
+            // Jika tombol diklik ulang, reset loop yang lama agar tidak tabrakan
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
+
             try {
-                // Pastikan file model.json, metadata.json, dan weights.bin ada di folder yang sama
+                // Load model dari folder yang sama
                 model = await tmPose.load(URL_MODEL + "model.json", URL_MODEL + "metadata.json");
                 maxPredictions = model.getTotalClasses();
 
+                // Setup Webcam
                 const flip = true; 
                 webcam = new tmPose.Webcam(640, 480, flip); 
-                await webcam.setup(); 
-                await webcam.play();
+                await webcam.setup(); // Minta izin kamera
+                await webcam.play();  // Jalankan kamera
                 
-                // Mulai loop animasi utama
-                window.requestAnimationFrame(loopAmi);
-
                 // Buat Canvas khusus untuk merender kamera pose
                 const canvas = document.createElement("canvas");
                 canvas.width = 640;
@@ -32,6 +35,7 @@
                 document.getElementById("webcam-container").innerHTML = "";
                 document.getElementById("webcam-container").appendChild(canvas);
                 
+                // Setup Label Prediksi
                 labelContainer = document.getElementById("label-container");
                 labelContainer.innerHTML = "";
                 for (let i = 0; i < maxPredictions; i++) {
@@ -40,20 +44,29 @@
                     divBar.innerHTML = `<span class="nama-kelas">Memuat kata...</span><span class="persen-kelas">0%</span>`;
                     labelContainer.appendChild(divBar);
                 }
+
+                // Mulai loop animasi setelah semua elemen canvas & kamera siap
+                animationFrameId = window.requestAnimationFrame(loopAmi);
+
             } catch (error) {
-                placeholder.innerHTML = "❌ Gagal memuat AI lokal.<br><br>Solusi: Pastikan buka web via Live Server / GitHub Pages. Nama file wajib huruf kecil semua (model.json, metadata.json, weights.bin) dan berada di satu folder!";
+                placeholder.innerHTML = "❌ Gagal memuat AI atau Kamera.<br><br>Solusi: Pastikan sudah Izinkan Kamera (Allow Camera) di browser, dan file model.json berada di folder yang sama dengan file html ini!";
                 console.error(error);
             }
         }
 
         async function loopAmi() {
-            webcam.update(); 
-            await prediksiIsyaratAnak();
-            // Panggil frame berikutnya hanya setelah prediksi saat ini selesai diproses
-            window.requestAnimationFrame(loopAmi);
+            if (webcam && webcam.canvas) {
+                webcam.update(); // Update frame kamera
+                await prediksiIsyaratAnak();
+            }
+            // Lanjut ke frame berikutnya
+            animationFrameId = window.requestAnimationFrame(loopAmi);
         }
 
         async function prediksiIsyaratAnak() {
+            // Pastikan model dan webcam sudah siap sepenuhnya
+            if (!model || !webcam.canvas) return;
+
             const { pose, prediction } = await model.estimatePose(webcam.canvas);
             
             // Gambar kamera dan kerangka tubuh di canvas layar
@@ -65,7 +78,6 @@
                 }
             }
             
-            // Variabel bantuan untuk menampung data selebrasi jika terdeteksi
             let pemicuSelebrasi = null;
 
             for (let i = 0; i < maxPredictions; i++) {
@@ -73,7 +85,7 @@
                 const akurasi = prediction[i].probability; 
                 const persen = (akurasi * 100).toFixed(0);
 
-                if (labelContainer.childNodes[i]) {
+                if (labelContainer && labelContainer.childNodes[i]) {
                     labelContainer.childNodes[i].innerHTML = `
                         <span class="nama-kelas">${namaGerakan}</span>
                         <span class="persen-kelas">${persen}% MATCH</span>
@@ -85,7 +97,7 @@
                     }
                 }
 
-                // Cek apakah gerakan valid untuk diselebrasikan
+                // Cek kata yang harus diabaikan untuk selebrasi
                 const namaGerakanUpper = namaGerakan.toUpperCase();
                 const isKataAbaikan = namaGerakanUpper === "NORMAL" || namaGerakanUpper === "BACKGROUND" || namaGerakanUpper === "NETRAL";
 
@@ -94,7 +106,7 @@
                 }
             }
 
-            // Jalankan selebrasi di luar loop 'for' agar tidak bentrok
+            // Jalankan selebrasi di luar loop 'for' agar tidak lag/bentrok
             if (pemicuSelebrasi) {
                 jalankanSelebrasi(pemicuSelebrasi);
             }
@@ -108,7 +120,7 @@
             const overlay = document.getElementById("celebration-overlay");
             overlay.style.display = "flex";
 
-            let duration = 3.5 * 1000; // Samakan dengan durasi timeout biar sinkron
+            let duration = 3.5 * 1000; 
             let end = Date.now() + duration;
 
             (function frame() {
