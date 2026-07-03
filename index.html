@@ -278,7 +278,7 @@
     <script type="text/javascript">
         const URL_MODEL = "./"; 
 
-        let model, videoElement, ctx, canvasElement, labelContainer, maxPredictions;
+        let model, webcam, ctx, labelContainer, maxPredictions;
         let isCelebrating = false; 
         let animationFrameId = null;
 
@@ -291,41 +291,28 @@
             }
 
             try {
-                // 1. Memuat Model AI
+                // 1. Memuat Model AI Teachable Machine
                 model = await tmPose.load(URL_MODEL + "model.json", URL_MODEL + "metadata.json");
                 maxPredictions = model.getTotalClasses();
 
-                // 2. Akses Live Kamera menggunakan standar HTML5 Video
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { width: 640, height: 480, facingMode: "user" }, 
-                    audio: false 
-                });
-
-                videoElement = document.createElement("video");
-                videoElement.srcObject = stream;
-                videoElement.autoplay = true;
-                videoElement.playsInline = true;
-                videoElement.muted = true;
-                videoElement.width = 640;
-                videoElement.height = 480;
-
-                await new Promise((resolve) => {
-                    videoElement.onloadedmetadata = () => {
-                        videoElement.play();
-                        resolve();
-                    };
-                });
+                // 2. Setup Webcam Resmi Teachable Machine
+                const size = 480; 
+                const flip = true; 
+                webcam = new tmPose.Webcam(size, size, flip); 
                 
-                // 3. Setup Canvas Tampilan Utama
-                canvasElement = document.createElement("canvas");
-                canvasElement.width = 640;
-                canvasElement.height = 480;
-                ctx = canvasElement.getContext("2d");
-
+                // Meminta akses perangkat hardware kamera
+                await webcam.setup(); 
+                // Mulai memancarkan gambar video streaming
+                await webcam.play();
+                
+                // 3. Pasang Canvas Tampilan Utama ke Layar HTML
                 document.getElementById("webcam-container").innerHTML = "";
-                document.getElementById("webcam-container").appendChild(canvasElement);
+                document.getElementById("webcam-container").appendChild(webcam.canvas);
                 
-                // 4. Setup Label
+                // Mengambil context canvas agar framework AI bisa menggambar tulang di atasnya
+                ctx = webcam.canvas.getContext("2d");
+
+                // 4. Inisialisasi Daftar Label Deteksi Gerakan
                 labelContainer = document.getElementById("label-container");
                 labelContainer.innerHTML = "";
                 for (let i = 0; i < maxPredictions; i++) {
@@ -335,42 +322,39 @@
                     labelContainer.appendChild(divBar);
                 }
 
-                // Jalankan perulangan gambar frame
+                // Jalankan putaran animasi frame
                 animationFrameId = window.requestAnimationFrame(loopAmi);
 
             } catch (error) {
-                placeholder.innerHTML = "❌ Kamera Gagal Merespon.<br><br>Solusi: Pastikan tidak ada aplikasi lain memakai kamera, lalu refresh halaman!";
+                placeholder.innerHTML = "❌ Kamera Gagal Merespon.<br><br>Solusi: Tutup aplikasi lain yang sedang pakai kamera, berikan izin 'Allow Camera', lalu refresh halaman!";
                 console.error(error);
             }
         }
 
         async function loopAmi() {
-            if (videoElement && videoElement.readyState === videoElement.HAVE_ENOUGH_DATA) {
-                if (ctx) {
-                    ctx.clearRect(0, 0, 640, 480);
-                    // Gambar frame kamera terbaru (di-flip cermin)
-                    ctx.save();
-                    ctx.scale(-1, 1);
-                    ctx.drawImage(videoElement, -640, 0, 640, 480);
-                    ctx.restore();
-                }
-                
-                // Kirim frame aktif langsung ke AI Teachable Machine
+            if (webcam) {
+                // Paksa pembaruan frame gambar kamera internal dari Teachable Machine
+                webcam.update(); 
+                // Kirim frame baru tersebut untuk dihitung oleh kecerdasan buatan
                 await prediksiIsyaratAnak();
             }
             animationFrameId = window.requestAnimationFrame(loopAmi);
         }
 
         async function prediksiIsyaratAnak() {
-            if (!model || !canvasElement) return;
+            if (!model || !webcam) return;
 
-            // Mengestimasi koordinat tubuh langsung dari canvas yang terus bergerak
-            const { pose, prediction } = await model.estimatePose(canvasElement);
+            // Mengestimasi koordinat tubuh (Pose & Prediction) langsung dari canvas webcam
+            const { pose, prediction } = await model.estimatePose(webcam.canvas);
             
-            // Gambar tulang kerangka di atas canvas
-            if (ctx && pose) {
-                model.drawKeypoints(pose.keypoints, 0.6, ctx);
-                model.drawSkeleton(pose.keypoints, 0.6, ctx);
+            // Gambar ulang tulang kerangka tubuh jika ada orang yang terdeteksi di kamera
+            if (ctx) {
+                // Gambar ulang background video agar kerangka tidak menumpuk berbayang
+                ctx.drawImage(webcam.canvas, 0, 0);
+                if (pose) {
+                    model.drawKeypoints(pose.keypoints, 0.6, ctx);
+                    model.drawSkeleton(pose.keypoints, 0.6, ctx);
+                }
             }
             
             let pemicuSelebrasi = null;
