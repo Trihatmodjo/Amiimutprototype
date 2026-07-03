@@ -36,27 +36,6 @@
             overflow-x: hidden;
         }
 
-        .glow-orb-1 {
-            position: absolute;
-            width: 400px;
-            height: 400px;
-            background: radial-gradient(circle, rgba(168,85,247,0.15) 0%, rgba(0,0,0,0) 70%);
-            top: -100px;
-            left: -100px;
-            z-index: 0;
-            pointer-events: none;
-        }
-        .glow-orb-2 {
-            position: absolute;
-            width: 500px;
-            height: 500px;
-            background: radial-gradient(circle, rgba(6,182,212,0.12) 0%, rgba(0,0,0,0) 70%);
-            bottom: -150px;
-            right: -150px;
-            z-index: 0;
-            pointer-events: none;
-        }
-
         .main-card {
             background: var(--card-bg);
             backdrop-filter: blur(16px);
@@ -76,88 +55,54 @@
             font-family: 'Space Grotesk', sans-serif;
             font-size: 42px;
             font-weight: 700;
-            letter-spacing: -1px;
             margin-bottom: 8px;
             background: linear-gradient(to right, #FFF 20%, #A855F7 50%, #06B6D4 80%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            background-size: 200% auto;
-            animation: shine 4s linear infinite;
-        }
-
-        @keyframes shine {
-            to { background-position: 200% center; }
         }
 
         p.subtitle {
             color: var(--text-muted);
             font-size: 16px;
-            font-weight: 500;
             margin-bottom: 32px;
-            letter-spacing: 0.5px;
         }
         
         #webcam-container {
             margin: 0 auto 32px auto;
-            width: 100%;
-            max-width: 640px;
+            width: 480px;
             height: 480px;
             border-radius: 24px;
             border: 1px solid rgba(255, 255, 255, 0.15);
             overflow: hidden;
             background-color: #0B0F19;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4), inset 0 0 30px rgba(0,0,0,0.6);
             display: flex;
             justify-content: center;
             align-items: center;
-            position: relative;
         }
 
         #webcam-container canvas {
             width: 100% !important;
             height: 100% !important;
-            object-fit: cover;
+            transform: scaleX(-1); /* Efek Cermin */
         }
         
         .placeholder-text {
             color: var(--accent-cyan);
             font-size: 18px;
-            padding: 24px;
             font-weight: 700;
-            line-height: 1.6;
-            letter-spacing: 0.5px;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 0.6; }
-            50% { opacity: 1; }
         }
         
         .btn-mulai {
-            font-family: 'Plus Jakarta Sans', sans-serif;
             font-weight: 800;
             background: linear-gradient(135deg, #A855F7 0%, #06B6D4 100%);
             color: white;
             border: none;
             padding: 16px 48px;
             font-size: 20px;
-            letter-spacing: 1px;
             border-radius: 16px;
             cursor: pointer;
-            box-shadow: 0 0 20px rgba(6, 182, 212, 0.4);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            margin-bottom: 12px;
             text-transform: uppercase;
-        }
-
-        .btn-mulai:hover {
-            transform: translateY(-2px) scale(1.02);
-            box-shadow: 0 0 30px rgba(168, 85, 247, 0.6);
-        }
-
-        .btn-mulai:active {
-            transform: translateY(1px);
+            margin-bottom: 12px;
         }
         
         #label-container {
@@ -165,11 +110,8 @@
             padding: 12px;
             background-color: rgba(15, 23, 42, 0.6);
             border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            min-height: 80px;
             display: flex;
             flex-direction: column;
-            justify-content: center;
             gap: 12px;
         }
 
@@ -183,20 +125,10 @@
             border-left: 5px solid var(--accent-purple);
             font-size: 16px;
             font-weight: 700;
-            transition: all 0.3s ease;
         }
 
-        .nama-kelas { 
-            color: var(--text-main); 
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .persen-kelas { 
-            color: var(--accent-cyan); 
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 18px;
-        }
+        .nama-kelas { color: var(--text-main); text-transform: uppercase;}
+        .persen-kelas { color: var(--accent-cyan); font-family: 'Space Grotesk', sans-serif;}
         
         #celebration-overlay {
             position: absolute;
@@ -209,49 +141,14 @@
             align-items: center;
             z-index: 10;
             display: none;
-            animation: popIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             border: 2px solid var(--accent-green);
         }
 
-        #celebration-overlay h2 {
-            font-family: 'Space Grotesk', sans-serif;
-            color: var(--accent-green);
-            font-size: 52px;
-            font-weight: 700;
-            margin: 0;
-            letter-spacing: -1px;
-            text-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
-        }
-
-        #celebration-overlay p {
-            font-size: 22px;
-            color: var(--text-main);
-            margin-top: 16px;
-            font-weight: 500;
-        }
-
-        #nama-kata-sukses {
-            color: var(--accent-cyan);
-            font-family: 'Space Grotesk', sans-serif;
-            font-weight: 700;
-            padding: 4px 16px;
-            background: rgba(6, 182, 212, 0.1);
-            border: 1px solid rgba(6, 182, 212, 0.2);
-            border-radius: 12px;
-            display: inline-block;
-            margin: 0 4px;
-        }
-
-        @keyframes popIn {
-            0% { transform: scale(0.95); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
-        }
+        #celebration-overlay h2 { color: var(--accent-green); font-size: 52px; }
+        #nama-kata-sukses { color: var(--accent-cyan); font-weight: 700; }
     </style>
 </head>
 <body>
-
-    <div class="glow-orb-1"></div>
-    <div class="glow-orb-2"></div>
 
     <div class="main-card">
         <div id="celebration-overlay">
@@ -271,8 +168,8 @@
         <div id="label-container"></div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@latest/dist/teachablemachine-pose.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8.6/dist/teachablemachine-pose.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <script type="text/javascript">
@@ -280,39 +177,30 @@
 
         let model, webcam, ctx, labelContainer, maxPredictions;
         let isCelebrating = false; 
-        let animationFrameId = null;
 
         async function startAmiImut() {
             const placeholder = document.getElementById("placeholder-info");
             placeholder.innerHTML = "Menghubungkan ke Otak AI Pose... Tunggu bentar ya...";
 
-            if (animationFrameId) {
-                cancelAnimationFrame(animationFrameId);
-            }
-
             try {
-                // 1. Memuat Model AI Teachable Machine
+                // 1. Memuat Model AI
                 model = await tmPose.load(URL_MODEL + "model.json", URL_MODEL + "metadata.json");
                 maxPredictions = model.getTotalClasses();
 
-                // 2. Setup Webcam Resmi Teachable Machine
-                const size = 480; 
+                // 2. Setup Webcam bawaan pustaka asli Google (Ukuran 480x480 kotak pas)
+                const size = 480;
                 const flip = true; 
                 webcam = new tmPose.Webcam(size, size, flip); 
-                
-                // Meminta akses perangkat hardware kamera
                 await webcam.setup(); 
-                // Mulai memancarkan gambar video streaming
                 await webcam.play();
                 
-                // 3. Pasang Canvas Tampilan Utama ke Layar HTML
+                // Masukkan canvas asli dari webcam bawaan Google ke dalam container
                 document.getElementById("webcam-container").innerHTML = "";
                 document.getElementById("webcam-container").appendChild(webcam.canvas);
                 
-                // Mengambil context canvas agar framework AI bisa menggambar tulang di atasnya
                 ctx = webcam.canvas.getContext("2d");
 
-                // 4. Inisialisasi Daftar Label Deteksi Gerakan
+                // 3. Setup Label Tampilan
                 labelContainer = document.getElementById("label-container");
                 labelContainer.innerHTML = "";
                 for (let i = 0; i < maxPredictions; i++) {
@@ -322,39 +210,30 @@
                     labelContainer.appendChild(divBar);
                 }
 
-                // Jalankan putaran animasi frame
-                animationFrameId = window.requestAnimationFrame(loopAmi);
+                // 4. Memicu loop menggunakan loop bawaan Teachable Machine agar sinkron
+                window.requestAnimationFrame(loopAmi);
 
             } catch (error) {
-                placeholder.innerHTML = "❌ Kamera Gagal Merespon.<br><br>Solusi: Tutup aplikasi lain yang sedang pakai kamera, berikan izin 'Allow Camera', lalu refresh halaman!";
+                placeholder.innerHTML = "❌ Gagal memuat kamera/model. Pastikan izin kamera aktif!";
                 console.error(error);
             }
         }
 
-        async function loopAmi() {
-            if (webcam) {
-                // Paksa pembaruan frame gambar kamera internal dari Teachable Machine
-                webcam.update(); 
-                // Kirim frame baru tersebut untuk dihitung oleh kecerdasan buatan
-                await prediksiIsyaratAnak();
-            }
-            animationFrameId = window.requestAnimationFrame(loopAmi);
+        async function loopAmi(timestamp) {
+            webcam.update(); // Update frame gambar kamera
+            await prediksiIsyaratAnak();
+            window.requestAnimationFrame(loopAmi);
         }
 
         async function prediksiIsyaratAnak() {
-            if (!model || !webcam) return;
-
-            // Mengestimasi koordinat tubuh (Pose & Prediction) langsung dari canvas webcam
+            // Prediksi pose berdasarkan kanvas webcam bawaan Google
             const { pose, prediction } = await model.estimatePose(webcam.canvas);
             
-            // Gambar ulang tulang kerangka tubuh jika ada orang yang terdeteksi di kamera
-            if (ctx) {
-                // Gambar ulang background video agar kerangka tidak menumpuk berbayang
+            // Menggambar ulang video dan garis kerangka agar responsif bergerak
+            if (pose) {
                 ctx.drawImage(webcam.canvas, 0, 0);
-                if (pose) {
-                    model.drawKeypoints(pose.keypoints, 0.6, ctx);
-                    model.drawSkeleton(pose.keypoints, 0.6, ctx);
-                }
+                model.drawKeypoints(pose.keypoints, 0.6, ctx);
+                model.drawSkeleton(pose.keypoints, 0.6, ctx);
             }
             
             let pemicuSelebrasi = null;
@@ -369,11 +248,6 @@
                         <span class="nama-kelas">${namaGerakan}</span>
                         <span class="persen-kelas">${persen}% MATCH</span>
                     `;
-                    if(akurasi > 0.5) {
-                        labelContainer.childNodes[i].style.borderColor = "var(--accent-cyan)";
-                    } else {
-                        labelContainer.childNodes[i].style.borderColor = "var(--accent-purple)";
-                    }
                 }
 
                 const namaGerakanUpper = namaGerakan.toUpperCase();
@@ -391,9 +265,7 @@
 
         function jalankanSelebrasi(namaGerakan) {
             isCelebrating = true; 
-            
             document.getElementById("nama-kata-sukses").innerText = `"${namaGerakan.toUpperCase()}"`;
-            
             const overlay = document.getElementById("celebration-overlay");
             overlay.style.display = "flex";
 
@@ -403,9 +275,7 @@
             (function frame() {
                 confetti({ particleCount: 4, angle: 60, spread: 55, origin: { x: 0 } });
                 confetti({ particleCount: 4, angle: 120, spread: 55, origin: { x: 1 } });
-                if (Date.now() < end && isCelebrating) { 
-                    requestAnimationFrame(frame); 
-                }
+                if (Date.now() < end && isCelebrating) { requestAnimationFrame(frame); }
             }());
 
             setTimeout(() => {
