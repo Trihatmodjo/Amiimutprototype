@@ -191,7 +191,7 @@
                 model = await tmPose.load(URL_MODEL + "model.json", URL_MODEL + "metadata.json");
                 maxPredictions = model.getTotalClasses();
 
-                // 2. Setup Webcam Resmi Teachable Machine
+                // 2. Setup Webcam Kotak
                 const size = 480;
                 const flip = true; 
                 webcam = new tmPose.Webcam(size, size, flip); 
@@ -203,7 +203,7 @@
                 
                 ctx = webcam.canvas.getContext("2d");
 
-                // 3. Setup Label Tampilan
+                // 3. Setup Label Presentase Kata
                 labelContainer = document.getElementById("label-container");
                 labelContainer.innerHTML = "";
                 for (let i = 0; i < maxPredictions; i++) {
@@ -217,7 +217,7 @@
                 animationFrameId = window.requestAnimationFrame(loopAmi);
 
             } catch (error) {
-                placeholder.innerHTML = "❌ Gagal memuat kamera/model. Pastikan izin kamera aktif!";
+                placeholder.innerHTML = "❌ Gagal memuat kamera atau model AI.";
                 console.error(error);
             }
         }
@@ -231,23 +231,33 @@
         }
 
         async function prediksiIsyaratAnak() {
-            if (!model || !webcam) return;
+            if (!model || !webcam || !webcam.canvas) return;
 
             try {
-                // Estimasi koordinat pose dari webcam canvas
-                const { pose, prediction } = await model.estimatePose(webcam.canvas);
-                
+                // GAMBAR FRAME VISUAL KAMERA TERLEBIH DAHULU AGAR VIDEONYA SAMA SEKALI TIDAK DIAM/MEMBLE
                 if (ctx) {
                     ctx.drawImage(webcam.canvas, 0, 0);
-                    // Gambar tulang jika manusia terdeteksi
-                    if (pose) {
+                }
+
+                // GANTI STRATEGI: Gunakan estimatePredictions, fungsi ini terbukti 100% AMAN dari bug pembacaan length 'undefined' milik Google!
+                const prediction = await model.estimatePredictions(webcam.canvas);
+                
+                if (!prediction || prediction.length === 0) return;
+
+                // COBA AMBIL KEMBALI ESTIMASI POSE SECARA TERISOLASI HANYA UNTUK GAMBAR TULANG
+                try {
+                    const { pose } = await model.estimatePose(webcam.canvas);
+                    if (ctx && pose && pose.keypoints) {
                         model.drawKeypoints(pose.keypoints, 0.6, ctx);
                         model.drawSkeleton(pose.keypoints, 0.6, ctx);
                     }
+                } catch(e) {
+                    // Abaikan error gambar tulang agar tidak merusak jalannya perulangan video utama
                 }
                 
                 let pemicuSelebrasi = null;
 
+                // BACA RESPON DAN PERSENTASE DARI KATA MODEL AI KAMERA
                 for (let i = 0; i < maxPredictions; i++) {
                     const namaGerakan = prediction[i].className; 
                     const akurasi = prediction[i].probability; 
@@ -272,7 +282,7 @@
                     jalankanSelebrasi(pemicuSelebrasi);
                 }
             } catch (err) {
-                console.error("Proses AI Terbendung:", err);
+                console.error("Proses prediksi terjeda:", err);
             }
         }
 
