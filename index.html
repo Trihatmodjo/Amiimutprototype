@@ -83,7 +83,6 @@
         #webcam-container canvas {
             width: 100% !important;
             height: 100% !important;
-            transform: scaleX(-1); /* Efek Cermin */
         }
         
         .placeholder-text {
@@ -168,7 +167,7 @@
         <div id="label-container"></div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.18.0/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8.6/dist/teachablemachine-pose.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
@@ -177,24 +176,28 @@
 
         let model, webcam, ctx, labelContainer, maxPredictions;
         let isCelebrating = false; 
+        let animationFrameId = null;
 
         async function startAmiImut() {
             const placeholder = document.getElementById("placeholder-info");
             placeholder.innerHTML = "Menghubungkan ke Otak AI Pose... Tunggu bentar ya...";
+
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
 
             try {
                 // 1. Memuat Model AI
                 model = await tmPose.load(URL_MODEL + "model.json", URL_MODEL + "metadata.json");
                 maxPredictions = model.getTotalClasses();
 
-                // 2. Setup Webcam bawaan pustaka asli Google (Ukuran 480x480 kotak pas)
+                // 2. Setup Webcam Resmi Teachable Machine
                 const size = 480;
                 const flip = true; 
                 webcam = new tmPose.Webcam(size, size, flip); 
                 await webcam.setup(); 
                 await webcam.play();
                 
-                // Masukkan canvas asli dari webcam bawaan Google ke dalam container
                 document.getElementById("webcam-container").innerHTML = "";
                 document.getElementById("webcam-container").appendChild(webcam.canvas);
                 
@@ -210,8 +213,8 @@
                     labelContainer.appendChild(divBar);
                 }
 
-                // 4. Memicu loop menggunakan loop bawaan Teachable Machine agar sinkron
-                window.requestAnimationFrame(loopAmi);
+                // 4. Jalankan perulangan gambar
+                animationFrameId = window.requestAnimationFrame(loopAmi);
 
             } catch (error) {
                 placeholder.innerHTML = "❌ Gagal memuat kamera/model. Pastikan izin kamera aktif!";
@@ -219,47 +222,57 @@
             }
         }
 
-        async function loopAmi(timestamp) {
-            webcam.update(); // Update frame gambar kamera
-            await prediksiIsyaratAnak();
-            window.requestAnimationFrame(loopAmi);
+        async function loopAmi() {
+            if (webcam) {
+                webcam.update(); 
+                await prediksiIsyaratAnak();
+            }
+            animationFrameId = window.requestAnimationFrame(loopAmi);
         }
 
         async function prediksiIsyaratAnak() {
-            // Prediksi pose berdasarkan kanvas webcam bawaan Google
-            const { pose, prediction } = await model.estimatePose(webcam.canvas);
-            
-            // Menggambar ulang video dan garis kerangka agar responsif bergerak
-            if (pose) {
-                ctx.drawImage(webcam.canvas, 0, 0);
-                model.drawKeypoints(pose.keypoints, 0.6, ctx);
-                model.drawSkeleton(pose.keypoints, 0.6, ctx);
-            }
-            
-            let pemicuSelebrasi = null;
+            if (!model || !webcam) return;
 
-            for (let i = 0; i < maxPredictions; i++) {
-                const namaGerakan = prediction[i].className; 
-                const akurasi = prediction[i].probability; 
-                const persen = (akurasi * 100).toFixed(0);
+            try {
+                // Estimasi koordinat pose dari webcam canvas
+                const { pose, prediction } = await model.estimatePose(webcam.canvas);
+                
+                if (ctx) {
+                    ctx.drawImage(webcam.canvas, 0, 0);
+                    // Gambar tulang jika manusia terdeteksi
+                    if (pose) {
+                        model.drawKeypoints(pose.keypoints, 0.6, ctx);
+                        model.drawSkeleton(pose.keypoints, 0.6, ctx);
+                    }
+                }
+                
+                let pemicuSelebrasi = null;
 
-                if (labelContainer && labelContainer.childNodes[i]) {
-                    labelContainer.childNodes[i].innerHTML = `
-                        <span class="nama-kelas">${namaGerakan}</span>
-                        <span class="persen-kelas">${persen}% MATCH</span>
-                    `;
+                for (let i = 0; i < maxPredictions; i++) {
+                    const namaGerakan = prediction[i].className; 
+                    const akurasi = prediction[i].probability; 
+                    const persen = (akurasi * 100).toFixed(0);
+
+                    if (labelContainer && labelContainer.childNodes[i]) {
+                        labelContainer.childNodes[i].innerHTML = `
+                            <span class="nama-kelas">${namaGerakan}</span>
+                            <span class="persen-kelas">${persen}% MATCH</span>
+                        `;
+                    }
+
+                    const namaGerakanUpper = namaGerakan.toUpperCase();
+                    const isKataAbaikan = namaGerakanUpper === "NORMAL" || namaGerakanUpper === "BACKGROUND" || namaGerakanUpper === "NETRAL";
+
+                    if (akurasi > 0.85 && !isCelebrating && !isKataAbaikan) {
+                        pemicuSelebrasi = namaGerakan;
+                    }
                 }
 
-                const namaGerakanUpper = namaGerakan.toUpperCase();
-                const isKataAbaikan = namaGerakanUpper === "NORMAL" || namaGerakanUpper === "BACKGROUND" || namaGerakanUpper === "NETRAL";
-
-                if (akurasi > 0.85 && !isCelebrating && !isKataAbaikan) {
-                    pemicuSelebrasi = namaGerakan;
+                if (pemicuSelebrasi) {
+                    jalankanSelebrasi(pemicuSelebrasi);
                 }
-            }
-
-            if (pemicuSelebrasi) {
-                jalankanSelebrasi(pemicuSelebrasi);
+            } catch (err) {
+                console.error("Proses AI Terbendung:", err);
             }
         }
 
