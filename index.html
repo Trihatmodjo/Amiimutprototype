@@ -8,11 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
     
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         
         :root {
             --bg-gradient: linear-gradient(135deg, #0F172A 0%, #1E1B4B 50%, #311042 100%);
@@ -39,7 +35,6 @@
         .main-card {
             background: var(--card-bg);
             backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
             border-radius: 32px;
             padding: 40px;
             width: 100%;
@@ -61,11 +56,7 @@
             -webkit-text-fill-color: transparent;
         }
 
-        p.subtitle {
-            color: var(--text-muted);
-            font-size: 16px;
-            margin-bottom: 32px;
-        }
+        p.subtitle { color: var(--text-muted); font-size: 16px; margin-bottom: 32px; }
         
         #webcam-container {
             margin: 0 auto 32px auto;
@@ -80,16 +71,9 @@
             align-items: center;
         }
 
-        #webcam-container canvas {
-            width: 100% !important;
-            height: 100% !important;
-        }
+        #webcam-container canvas { width: 100% !important; height: 100% !important; }
         
-        .placeholder-text {
-            color: var(--accent-cyan);
-            font-size: 18px;
-            font-weight: 700;
-        }
+        .placeholder-text { color: var(--accent-cyan); font-size: 18px; font-weight: 700; }
         
         .btn-mulai {
             font-weight: 800;
@@ -203,7 +187,7 @@
                 
                 ctx = webcam.canvas.getContext("2d");
 
-                // 3. Setup Label Presentase Kata
+                // 3. Setup Label Tampilan
                 labelContainer = document.getElementById("label-container");
                 labelContainer.innerHTML = "";
                 for (let i = 0; i < maxPredictions; i++) {
@@ -234,17 +218,17 @@
             if (!model || !webcam || !webcam.canvas) return;
 
             try {
-                // GAMBAR FRAME VISUAL KAMERA TERLEBIH DAHULU AGAR VIDEONYA SAMA SEKALI TIDAK DIAM/MEMBLE
+                // GAMBAR VISUAL KAMERA TERLEBIH DAHULU AGAR VIDEONYA SAMA SEKALI TIDAK DIAM/MEMBLE
                 if (ctx) {
                     ctx.drawImage(webcam.canvas, 0, 0);
                 }
 
-                // GANTI STRATEGI: Gunakan estimatePredictions, fungsi ini terbukti 100% AMAN dari bug pembacaan length 'undefined' milik Google!
+                // BYPASS BUGS GOOGLE: Gunakan estimatePredictions, jangan pakai estimatePose untuk ambil kata
                 const prediction = await model.estimatePredictions(webcam.canvas);
                 
                 if (!prediction || prediction.length === 0) return;
 
-                // COBA AMBIL KEMBALI ESTIMASI POSE SECARA TERISOLASI HANYA UNTUK GAMBAR TULANG
+                // COBA AMBIL ESTIMASI POSE TERPISAH HANYA UNTUK GAMBAR KERANGKA
                 try {
                     const { pose } = await model.estimatePose(webcam.canvas);
                     if (ctx && pose && pose.keypoints) {
@@ -252,7 +236,7 @@
                         model.drawSkeleton(pose.keypoints, 0.6, ctx);
                     }
                 } catch(e) {
-                    // Abaikan error gambar tulang agar tidak merusak jalannya perulangan video utama
+                    // Abaikan error gambar kerangka agar perulangan video utama tidak macet
                 }
                 
                 let pemicuSelebrasi = null;
